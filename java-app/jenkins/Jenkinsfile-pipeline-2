@@ -3,7 +3,7 @@ pipeline {
         label 'ubuntu'
     }
     tools {
-        maven 'maven-apache-3.8.4' 
+        maven 'maven-3.8.4' 
     }
     stages {
         stage('Build') {
