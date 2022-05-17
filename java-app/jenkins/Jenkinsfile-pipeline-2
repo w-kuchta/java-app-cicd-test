@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'ubuntu'
+        label 'node'
     }
     tools {
         maven 'mvn-3.8.4' 
