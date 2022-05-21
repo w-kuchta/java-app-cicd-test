@@ -81,7 +81,7 @@ pipeline {
     post {
         failure {
             sh 'echo "Send email step"'
-            emailext(body: 'ttttttt, mimeType: 'text/html',
+            emailext(body: 'ttttttt', mimeType: 'text/html',
                 subject: 'ddddddd', to: 'wkuchta@wp.pl')
         }
         cleanup {
