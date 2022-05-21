@@ -81,8 +81,8 @@ pipeline {
     post {
         failure {
             sh 'echo "Send email step"'
-            emailext(body: '${DEFAULT_CONTENT}', mimeType: 'text/html',
-                subject: '${DEFAULT_SUBJECT}', to: '<your_email>')
+            emailext(body: 'ttttttt, mimeType: 'text/html',
+                subject: 'ddddddd', to: 'wkuchta@wp.pl')
         }
         cleanup {
             script { cleanWs() }
