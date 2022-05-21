@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+    environment {
+		DOCKERHUB_CREDENTIALS=credentials('dockerhub-wkuchta')
+        REGISTRY_NAME='wkuchta/python-dockerhub'
+	}
+    stages {
+        stage('Test python app') {
+            agent {
+                docker {
+                    image 'python:3.8.8-slim-buster'
+                    label 'node01'
+                }
+            }
+            //environment {
+            //    HOME = "${WORKSPACE}/python-app"
+            //} .local/bin/pytest
+            steps {
+                dir('python-app') {
+                    sh '''
+                        python -m venv env
+                        env/bin/pip install -r requirements.txt
+                        env/bin/pytest . --junit-xml=pytest_junit.xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit testResults: '**/*pytest_junit.xml'
+                }
+            }
+        }
+        stage('Build Docker image') {
+            agent {
+                label 'node01'
+            }
+            steps {
+                dir('python-app') {
+                    sh 'docker build -t $REGISTRY_NAME:$BUILD_NUMBER .'
+                } 
+            }
+        }
+        stage('Push') {
+            agent {
+                label 'node01'
+            }
+            steps {
+                dir('python-app') {
+                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                    sh 'docker push $REGISTRY_NAME:$BUILD_NUMBER'
+                }  
+            }
+        }
+        stage('Deploy to DEV'){
+            agent {
+                label 'node01'
+            }
+            steps {
+                sh 'docker rm -f dev-python-app 2> /dev/null || true'
+                sh 'docker run --name dev-python-app -d -p 5000:5000 $REGISTRY_NAME:$BUILD_NUMBER'
+            }
+            post { 
+                always { 
+                    input 'Validation: Confirm the application is working properly?'
+                }
+            }
+        }
+        stage('Deploy to PRODUCTION'){
+            when {
+                branch 'master'
+            }
+            agent {
+                label 'node01'
+            }
+            steps {
+                sh 'docker rm -f PROD-python-app 2> /dev/null || true'
+                sh 'docker run --name dev-python-app -d -p 80:5000 $REGISTRY_NAME:$BUILD_NUMBER'
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'echo "Send email step"'
+            emailext(body: 'ttttttt', mimeType: 'text/html',
+                subject: 'ddddddd', to: 'wkuchta@wp.pl')
+        }
+        cleanup {
+            script { cleanWs() }
+        }
+    }
+}
